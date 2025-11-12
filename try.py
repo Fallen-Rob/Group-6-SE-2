@@ -1,2 +1,0 @@
-import customtkinter
-print(customtkinter.__version__)

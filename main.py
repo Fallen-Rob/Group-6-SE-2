@@ -13,13 +13,6 @@ from history import HistoryPage
 import sys
 
 
-# ✅ allows correct file paths for both Python & PyInstaller EXE
-def resource_path(relative_path):
-    if hasattr(sys, "_MEIPASS"):  # running from EXE
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
-
-
 # theme or body color
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -72,7 +65,7 @@ class MainPage(ctk.CTk):
             corner_radius=15,
             command=self.select_image
         )
-        select_image_btn.place(relx=0.5, rely=0.5, anchor="center")
+        select_image_btn.place(relx=0.5, rely=0.6, anchor="center")
 
         self.show_main()
 
@@ -83,6 +76,12 @@ class MainPage(ctk.CTk):
     def show_history(self):
         self.history_page.load_history_data()
         self.history_page.tkraise()
+
+# pang exe pero ayaw gumana arayko
+    def get_resource_path(self, relative_path):
+        if hasattr(sys, "_MEIPASS"):
+            return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(os.path.abspath("."), relative_path)
 
 # select image from directory
     def select_image(self):
@@ -127,19 +126,16 @@ class MainPage(ctk.CTk):
                 file_name = os.path.basename(file_path)
                 current_time = datetime.datetime.now().strftime("%B %d, %Y %I:%M %p")
 
-# ✅ updated: safe path for EXE
-                onnx_path = resource_path("ai_detector_v2_optimized.onnx")
-
                 so = ort.SessionOptions()
                 so.intra_op_num_threads = 4
                 so.inter_op_num_threads = 1
                 so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
                 so.execution_mode = ort.ExecutionMode.ORT_PARALLEL
             
-                session = ort.InferenceSession(onnx_path, so, providers=["CPUExecutionProvider"])
+                model_path = self.get_resource_path("ai_detector_v2_optimized.onnx")
+                session = ort.InferenceSession(model_path, so, providers=["CPUExecutionProvider"])
 
-# ✅ updated: safe offline HuggingFace model path for EXE
-                processor_path = resource_path("offline_model/models--google--vit-base-patch16-224/snapshots/config")
+                processor_path = self.get_resource_path("offline_model/models--google--vit-base-patch16-224/snapshots/config")
                 processor = AutoImageProcessor.from_pretrained(processor_path)
                 
                 img = Image.open(file_path).convert("RGB")
@@ -196,93 +192,72 @@ class MainPage(ctk.CTk):
 # display result
     def display_result(self, file_path, authenticity, confidence_str):
         result_frame = ctk.CTkFrame(self.bg_frame, corner_radius=20)
-        result_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.8, relheight=0.5)
+        result_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.95, relheight=0.55)
         result_frame.attributes = {"alpha": 0.0}
 
-# display image and result in left and right
-        left = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
-        left.place(relx=0.02, rely=0.5, anchor="w", relwidth=0.30, relheight=0.9)
+        result_frame.grid_rowconfigure(0, weight=1)
+        result_frame.grid_columnconfigure((0,1,2), weight=1)
 
-# ✅ updated — new 3-column result section
-        right = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
-        right.place(relx=0.35, rely=0.5, anchor="w", relwidth=0.63, relheight=0.9)
-        right.grid_columnconfigure((0, 1, 2), weight=1)
+# preview ng image na pinili
+        col1 = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
+        col1.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-# to see preview of image
+        ctk.CTkLabel(col1, text="Image", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10,5))
+
         try:
             preview = Image.open(file_path)
-            preview.thumbnail((230, 230))
+            preview.thumbnail((250,250))
             preview_tk = ImageTk.PhotoImage(preview)
-            image_label = ctk.CTkLabel(left, image=preview_tk, text="")
-            image_label.image = preview_tk
-            image_label.pack(expand=True)
-        except Exception as e:
-            ctk.CTkLabel(left, text=f"Error loading image:\n{e}", text_color="red").pack(pady=10)
+            img_label = ctk.CTkLabel(col1, image=preview_tk, text="")
+            img_label.image = preview_tk
+            img_label.pack(pady=10)
+        except:
+            ctk.CTkLabel(col1, text="Image Load Error", text_color="red").pack()
+
+# ai gen lngs
+        col2 = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
+        col2.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+
+        ctk.CTkLabel(col2, text="AI Generated", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10,20))
 
 # result color whether ai or not
         color = "#00C853" if authenticity.lower() == "real" else "#FF5252"
 
-# whether its ai or not — COLUMN 1
-        result_label = ctk.CTkLabel(
-            right,
-            text=f"Authenticity:\n{authenticity}",
+        ctk.CTkLabel(
+            col2,
+            text=f"Authenticity: {authenticity}\nConfidence: {confidence_str}",
+            font=ctk.CTkFont(size=16, weight="bold"),
             text_color=color,
-            font=ctk.CTkFont(size=18, weight="bold"),
             justify="center"
-        )
-        result_label.grid(row=0, column=0, pady=(40, 10), padx=10)
+        ).pack(pady=10)
 
-# confidence on how sure the ai checker on authenticity — COLUMN 2
-        confidence_label = ctk.CTkLabel(
-            right,
-            text=f"Confidence:\n{confidence_str}",
-            text_color="black",
-            font=ctk.CTkFont(size=18),
-            justify="center"
-        )
-        confidence_label.grid(row=0, column=1, pady=(40, 10), padx=10)
+# deepfake uh column
+        col3 = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
+        col3.grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
 
-# ✅ NEW — COLUMN 3 for future Deepfake AI model
-        deepfake_placeholder = ctk.CTkLabel(
-            right,
-            text="Deepfake Result:\nPending",
+        ctk.CTkLabel(col3, text="Deepfake", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10,5))
+
+        ctk.CTkLabel(
+            col3,
+            text="Pending AI Model...\nConfidence: --",
+            font=ctk.CTkFont(size=16),
             text_color="#0077CC",
-            font=ctk.CTkFont(size=18, weight="bold"),
             justify="center"
-        )
-        deepfake_placeholder.grid(row=0, column=2, pady=(40, 10), padx=10)
+        ).pack(pady=20)
 
 # closing button for results
         close_btn = ctk.CTkButton(
-            right,
+            result_frame,
             text="Close",
             fg_color="#E53935",
             hover_color="#D32F2F",
             text_color="white",
-            width=100,
+            width=120,
             command=lambda: result_frame.destroy()
         )
-        close_btn.grid(row=1, column=1, pady=(20, 10))
+        close_btn.place(relx=0.46, rely=0.85, anchor="w")
 
         result_frame.lift()
-
-# animation for process
-        def fade_in(alpha=0.0):
-            if alpha < 1.0:
-                try:
-                    result_frame.tk.call("tk", "scaling")
-                    result_frame.update_idletasks()
-                except:
-                    pass
-                result_frame.place(relx=0.5, rely=0.5, anchor="center")
-                
-                result_frame.attributes["alpha"] = alpha
-                result_frame.configure(fg_color="blue")
-                self.after(20, lambda: fade_in(alpha + 0.05))
-            else:
-                result_frame.attributes["alpha"] = 1.0
-
-        fade_in()
 
 
 # makes the app run

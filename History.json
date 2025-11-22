@@ -4,5 +4,29 @@
         "Date": "November 20, 2025 12:39 AM",
         "Authenticity": "Real",
         "Confidence": "99.10%"
+    },
+    {
+        "File Name": "cat-banana.png",
+        "Date": "November 20, 2025 12:42 AM",
+        "Authenticity": "Fake",
+        "Confidence": "99.86%"
+    },
+    {
+        "File Name": "albedo2.jpg",
+        "Date": "November 20, 2025 12:50 AM",
+        "Authenticity": "Fake",
+        "Confidence": "55.78%"
+    },
+    {
+        "File Name": "cat-banana.png",
+        "Date": "November 20, 2025 01:21 AM",
+        "Authenticity": "Fake",
+        "Confidence": "99.86%"
+    },
+    {
+        "File Name": "chart.png",
+        "Date": "November 22, 2025 10:44 PM",
+        "Authenticity": "Fake",
+        "Confidence": "50.19%"
     }
 ]

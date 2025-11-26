@@ -28,7 +28,7 @@ class MainPage(ctk.CTk):
 
 # Background 
         self.bg_frame = ctk.CTkFrame(self, corner_radius=20)
-        self.bg_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.9, relheight=0.9)
+        self.bg_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=1.0, relheight=1.0)
         self.bg_frame.configure(fg_color="#8EA8FF")  # light blue background
 
 # frame for main and history
@@ -45,12 +45,15 @@ class MainPage(ctk.CTk):
 # button for page switching to history page
         view_history_btn = ctk.CTkButton(
             header,
-            text="View History",
+            text="VIEW HISTORY",
             fg_color="white",
             hover_color="#E5E5E5",
             text_color="black",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            width=100,
+            font=ctk.CTkFont(size=24, weight="bold"),
+            width=200,
+            height=100,
+            border_color="black",
+            border_width=5,
             command=self.show_history
         )
         view_history_btn.place(x=10, rely=0.5, anchor="w")

@@ -49,11 +49,12 @@ class MainPage(ctk.CTk):
             fg_color="white",
             hover_color="#E5E5E5",
             text_color="black",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            width=200,
-            height=100,
+            font=ctk.CTkFont(family="Verdana",size=18, weight="bold"),
+            width=180,
+            height=40,
+            corner_radius=20,
             border_color="black",
-            border_width=5,
+            border_width=3,
             command=self.show_history
         )
         view_history_btn.place(x=10, rely=0.5, anchor="w")
@@ -61,14 +62,19 @@ class MainPage(ctk.CTk):
 # button for selecting image
         select_image_btn = ctk.CTkButton(
             self.main_frame,
-            text="Select Image",
+            text="SELECT IMAGE",
+            fg_color="white",
+            hover_color="#E5E5E5",
+            text_color="black", 
             width=180,
             height=50,
             font=ctk.CTkFont(size=16, weight="bold"),
-            corner_radius=15,
+            corner_radius=18,
+            border_color="black",
+            border_width=3,
             command=self.select_image
         )
-        select_image_btn.place(relx=0.5, rely=0.6, anchor="center")
+        select_image_btn.place(relx=0.5, rely=0.7, anchor="center")
 
         self.show_main()
 

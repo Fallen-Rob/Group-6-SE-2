@@ -119,6 +119,7 @@ class MainPage(ctk.CTk):
         progress = ctk.CTkProgressBar(box, mode="indeterminate", width=200)
         progress.pack(pady=(0, 20))
         progress.start()
+
         self.update_idletasks()
 
         # eto yung nag poprocess habang nasa loading 
@@ -194,7 +195,7 @@ class MainPage(ctk.CTk):
 
         # col1: preview nung image
         col1 = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
-        col1.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        col1.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         ctk.CTkLabel(col1, text="Image", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10, 5))
 
@@ -207,7 +208,7 @@ class MainPage(ctk.CTk):
 
         # col2: AI result  yung confidence etc
         col2 = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
-        col2.grid(row=0, column=1, padx=15, pady=15, sticky="nsew")
+        col2.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
         ctk.CTkLabel(col2, text="AI Result", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10, 20))
 

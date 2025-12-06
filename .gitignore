@@ -1,8 +1,10 @@
 .venv/
 .mypy_cache/
 .mypy_cache/
-History.json
 __pycache__/
 ai_model
 build/
 dist/
+offline_model/
+ai_detector_v2.onnx.data
+History.json

@@ -70,7 +70,7 @@ class MainPage(ctk.CTk):
             text_color="black",
             width=180,
             height=50,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
             corner_radius=18,
             border_color="black",
             border_width=3,
@@ -230,6 +230,7 @@ class MainPage(ctk.CTk):
             fg_color="green",
             hover_color="green",
             text_color="white",
+            font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
             width=120,
             command=lambda: self.open_explain_overlay(file_path)
         )
@@ -241,6 +242,7 @@ class MainPage(ctk.CTk):
             fg_color="#E53935",
             hover_color="#D32F2F",
             text_color="white",
+            font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
             width=120,
             command=result_frame.destroy
         )
@@ -332,13 +334,19 @@ class MainPage(ctk.CTk):
                 btn_frame = ctk.CTkFrame(panel, fg_color="transparent")
                 btn_frame.place(relx=0.7, rely=0.8, anchor="center")
 
-                back_btn = ctk.CTkButton(btn_frame, text="Back", width=120,
-                                         fg_color="#3B82F6", hover_color="#2563EB",
+                back_btn = ctk.CTkButton(btn_frame, text="Back",
+                                         width=120,
+                                         fg_color="#3B82F6",
+                                         hover_color="#2563EB",
+                                         font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
                                          command=overlay.destroy)
                 back_btn.pack(pady=(0, 8))          # Back on top
 
-                close_btn = ctk.CTkButton(btn_frame, text="Close", width=120,
-                                          fg_color="#E53935", hover_color="#D32F2F",
+                close_btn = ctk.CTkButton(btn_frame, text="Close",
+                                          width=120,
+                                          fg_color="#E53935",
+                                          hover_color="#D32F2F",
+                                          font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
                                           command=lambda: (overlay.destroy(),
                                                            self.show_main()))
                 close_btn.pack()                    # Close below

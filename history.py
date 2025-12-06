@@ -2,6 +2,7 @@ import json
 import customtkinter as ctk  # type: ignore
 from tkinter import ttk
 
+
 class HistoryPage(ctk.CTkFrame):
     def __init__(self, parent, go_back_callback):
         super().__init__(parent, fg_color="transparent")
@@ -12,7 +13,7 @@ class HistoryPage(ctk.CTkFrame):
         self.bg_frame = ctk.CTkFrame(self, corner_radius=20)
         self.bg_frame.place(relx=0.5, rely=0.5, anchor="center",
                             relwidth=0.9, relheight=0.9)
-        self.bg_frame.configure(fg_color=("lightblue", "#7FA63"))
+        self.bg_frame.configure(fg_color=("lightblue", "#7FA6F3"))
 
         # --- HEADER ---
         header = ctk.CTkFrame(self.bg_frame, fg_color="white",
@@ -38,8 +39,10 @@ class HistoryPage(ctk.CTkFrame):
             font=ctk.CTkFont(size=18, weight="bold"),
             command=self.go_back_callback
         )
-                # ---------- CLEAR-HISTORY BUTTON ----------
-        clear_btn = ctk.CTkButton(
+        back_btn.place(x=10, rely=0.5, anchor="w")
+
+        # ---------- CLEAR-HISTORY BUTTON (created here, placed after data check) ----------
+        self.clear_btn = ctk.CTkButton(
             header,
             text="🗑 Clear History",
             width=100,
@@ -50,8 +53,7 @@ class HistoryPage(ctk.CTkFrame):
             font=ctk.CTkFont(size=12, weight="bold"),
             command=self.ask_clear_history
         )
-        clear_btn.place(relx=1, x=-10, rely=0.5, anchor="e")
-        back_btn.place(x=10, rely=0.5, anchor="w")
+        # will be shown/hidden after data load
 
         # --- TABLE AREA ---
         table_frame = ctk.CTkFrame(self.bg_frame, fg_color="white", corner_radius=15)
@@ -100,15 +102,11 @@ class HistoryPage(ctk.CTkFrame):
             ("Treeview.treearea", {"sticky": "nswe"})
         ])
 
-        # --- ROW SEPARATOR STYLE ---
-        style.configure("RowSeparator.Treeview",
-                        bordercolor="#D0D0D0",
-                        relief="flat")
-        
-
         self.tree.pack(fill="both", expand=True, padx=10, pady=10)
 
-    # --- LOAD DATA + ADD ROW LINES ---
+    # ------------------------------------------------------------------
+    #  LOAD DATA  +  SHOW/HIDE CLEAR BUTTON
+    # ------------------------------------------------------------------
     def load_history_data(self):
         # Clear current rows
         for row in self.tree.get_children():
@@ -131,14 +129,18 @@ class HistoryPage(ctk.CTkFrame):
                     )
                 )
 
-            # Apply tag to draw separator line
-            self.tree.tag_configure("row_line", background="white",
-                                    )
-
         except Exception as e:
             print("Error loading history:", e)
-            
-            # ---------- CONFIRM & WIPE ----------
+
+        # show/hide Clear button
+        if self.tree.get_children():        # at least 1 row
+            self.clear_btn.place(relx=1, x=-10, rely=0.5, anchor="e")
+        else:
+            self.clear_btn.place_forget()
+
+    # ------------------------------------------------------------------
+    #  CLEAR WITH CONFIRMATION
+    # ------------------------------------------------------------------
     def ask_clear_history(self):
         dlg = ctk.CTkToplevel(self)
         dlg.title("Confirm")
@@ -155,17 +157,25 @@ class HistoryPage(ctk.CTkFrame):
                 open("history.json", "w").write("[]")
             except Exception as e:
                 print("Clear failed:", e)
-            self.load_history_data()
+            self.load_history_data()   # refresh + hide button
             dlg.destroy()
 
         btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
         btn_frame.pack(pady=(0, 15))
 
-        ctk.CTkButton(btn_frame, text="Yes", width=80, fg_color="#E53935",
-                      hover_color="#C62828", command=yes).pack(side="left", padx=10)
-        ctk.CTkButton(btn_frame, text="No", width=80,
+        ctk.CTkButton(btn_frame,
+                      text="Yes",
+                      width=80,
+                      font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
+                      fg_color="#E53935",
+                      hover_color="#C62828",
+                      command=yes).pack(side="left", padx=10)
+        ctk.CTkButton(btn_frame,
+                      text="No",
+                      font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
+                      width=80,
                       command=dlg.destroy).pack(side="left", padx=10)
 
-        dlg.after(10, 
-                  lambda: dlg.wm_geometry
-                  (f"+{self.winfo_rootx() + self.winfo_width()//2 - 150}+{self.winfo_rooty() + self.winfo_height()//2 - 60}"))
+        dlg.after(10,
+                  lambda: dlg.wm_geometry(
+                      f"+{self.winfo_rootx() + self.winfo_width()//2 - 150}+{self.winfo_rooty() + self.winfo_height()//2 - 60}"))

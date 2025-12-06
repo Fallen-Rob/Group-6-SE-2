@@ -9,16 +9,17 @@ import numpy as np
 import torch
 import sys
 from gradcam_engine import explain_image
+import os
+import sys
+#  reuse the same helper you already have in main.py
+def _resource_path(rel):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, rel)
+    return os.path.join(os.path.abspath('.'), rel)
 
-# =====================================================
-# VARIABLES YOU CAN MODIFY
-# =====================================================
-ONNX_MODEL_PATH = "./ai_model/model_ai-generated.onnx"    # optimized ONNX model
-MODEL_DIR ="./ai_model"                              # PyTorch model + processor folder                              # default image
-HEATMAP_OUTPUT = "gradcam_overlay.png"                     # saved overlay from Grad-CAM
-LABELS = ["Fake", "Real"]                                 # index → class
-# =====================================================
-
+ONNX_MODEL_PATH = _resource_path("ai_model/model_ai-generated_opt.onnx")
+MODEL_DIR       = _resource_path("ai_model")
+HEATMAP_OUTPUT  = _resource_path("gradcam_overlay.png")
 
 def choose_providers():
     providers = ort.get_available_providers()

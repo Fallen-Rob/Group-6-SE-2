@@ -1,4 +1,8 @@
 .venv/
 .mypy_cache/
-.build/
 .mypy_cache/
+History.json
+__pycache__/
+ai_model
+build/
+dist/

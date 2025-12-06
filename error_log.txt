@@ -1,0 +1,12 @@
+=== FULL ERROR TRACEBACK ===
+Traceback (most recent call last):
+  File "c:\Users\ayuni\OneDrive\Documents\Group-6-SE-2\main.py", line 147, in process_image
+    session = ort.InferenceSession(model_path, so, providers=["CPUExecutionProvider"])
+  File "C:\Users\ayuni\AppData\Roaming\Python\Python313\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py", line 485, in __init__
+    self._create_inference_session(providers, provider_options, disabled_optimizers)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ayuni\AppData\Roaming\Python\Python313\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py", line 573, in _create_inference_session
+    sess = C.InferenceSession(session_options, self._model_path, True, self._read_config_from_model)
+onnxruntime.capi.onnxruntime_pybind11_state.NoSuchFile: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from C:\Users\ayuni\OneDrive\Documents\Group-6-SE-2\model_ai-generated_opt.onnx failed:Load model C:\Users\ayuni\OneDrive\Documents\Group-6-SE-2\model_ai-generated_opt.onnx failed. File doesn't exist
+
+=== END TRACEBACK ===

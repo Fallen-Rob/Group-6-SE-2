@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('ai_detector_v2_optimized.onnx', '.'), ('offline_model', 'offline_model'), ('history.json', '.')],
+    datas=[('ai_detector_v2.onnx', '.'), ('ai_detector_v2_optimized.onnx', '.'), ('ai_detector_v2.onnx.data', '.'), ('offline_model', 'offline_model')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['albedo.ico'],
 )

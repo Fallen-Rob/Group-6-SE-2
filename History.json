@@ -58,5 +58,23 @@
         "Date": "December 06, 2025 05:46 PM",
         "Authenticity": "Fake",
         "Confidence": "89.66%"
+    },
+    {
+        "File Name": "albedo.png",
+        "Date": "December 06, 2025 06:02 PM",
+        "Authenticity": "Fake",
+        "Confidence": "89.66%"
+    },
+    {
+        "File Name": "albedo.png",
+        "Date": "December 06, 2025 06:12 PM",
+        "Authenticity": "Fake",
+        "Confidence": "89.66%"
+    },
+    {
+        "File Name": "fallen.jpg",
+        "Date": "December 06, 2025 06:13 PM",
+        "Authenticity": "Real",
+        "Confidence": "99.92%"
     }
 ]

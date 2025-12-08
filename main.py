@@ -98,11 +98,16 @@ class MainPage(ctk.CTk):
     def select_image(self):
         file_path = filedialog.askopenfilename(
             title="Select an Image",
+            #para eto lng maaccept na file type
             filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;")]
         )
         if not file_path:
             return
-
+             #  size limit 5 MB
+        if os.path.getsize(file_path) > 5 * 1024 * 1024:
+            from tkinter import messagebox
+            messagebox.showwarning("File too large", "Please choose an image ≤ 5 MB.")
+            return
         #pang loading
         overlay = ctk.CTkFrame(self.bg_frame, corner_radius=0)
         overlay.place(relx=0, rely=0, relwidth=1, relheight=1)

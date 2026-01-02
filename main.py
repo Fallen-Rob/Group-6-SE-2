@@ -70,7 +70,7 @@ class MainPage(ctk.CTk):
             text_color="black",
             width=180,
             height=50,
-            font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
+            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
             corner_radius=18,
             border_color="black",
             border_width=3,
@@ -80,7 +80,7 @@ class MainPage(ctk.CTk):
 
         self.show_main()
 
-     #  pang navigate
+    #  pang navigate
     def show_main(self):
         self.main_frame.tkraise()
 
@@ -103,7 +103,7 @@ class MainPage(ctk.CTk):
         )
         if not file_path:
             return
-             #  size limit 5 MB
+        #  size limit 5 MB
         if os.path.getsize(file_path) > 5 * 1024 * 1024:
             from tkinter import messagebox
             messagebox.showwarning("File too large", "Please choose an image ≤ 5 MB.")
@@ -127,7 +127,7 @@ class MainPage(ctk.CTk):
 
         self.update_idletasks()
 
-        # eto yung nag poprocess habang nasa loading 
+        # eto yung nag poprocess habang nasa loading
         def process_image():
             try:
                 file_name = os.path.basename(file_path)
@@ -189,7 +189,6 @@ class MainPage(ctk.CTk):
 
         threading.Thread(target=process_image, daemon=True).start()
 
-    
     #  result page
     def display_result(self, file_path, authenticity, confidence_str):
         result_frame = ctk.CTkFrame(self.bg_frame, corner_radius=20, fg_color="white")
@@ -235,7 +234,7 @@ class MainPage(ctk.CTk):
             fg_color="green",
             hover_color="green",
             text_color="white",
-            font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
+            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
             width=120,
             command=lambda: self.open_explain_overlay(file_path)
         )
@@ -247,7 +246,7 @@ class MainPage(ctk.CTk):
             fg_color="#E53935",
             hover_color="#D32F2F",
             text_color="white",
-            font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
+            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
             width=120,
             command=result_frame.destroy
         )
@@ -255,14 +254,13 @@ class MainPage(ctk.CTk):
 
         result_frame.lift()
 
-    #  Explanation page 
+       #  Explanation page hahay
     def open_explain_overlay(self, img_path):
-        # para blue background
         overlay = ctk.CTkFrame(self.bg_frame, corner_radius=0)
         overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
         overlay.configure(fg_color="#8EA8FF")
 
-        # loading screen pag nag po process yung heatmap para di mukang static para di awkward
+        #Loading screen
         load_box = ctk.CTkFrame(overlay, fg_color="white", corner_radius=20)
         load_box.place(relx=0.5, rely=0.5, anchor="center",
                        relwidth=0.42, relheight=0.28)
@@ -275,8 +273,9 @@ class MainPage(ctk.CTk):
         load_pb.pack(pady=(6, 12))
         load_pb.start()
         self.update_idletasks()
-
-        # 3) background worker
+        #button para sa history
+        
+        # nag rurun gradcam
         def worker():
             try:
                 res = run_gradcam(img_path)
@@ -287,20 +286,33 @@ class MainPage(ctk.CTk):
                     explanation = "Grad-CAM finished (no string returned)."
             except Exception as e:
                 heatmap_path, explanation = None, f"Error generating explanation:\n{e}"
-                
-            # explanation page columns
+
             def show_panel():
                 load_pb.stop()
                 load_box.destroy()
-
-                # para same size dun sa result page
+                hist_btn = ctk.CTkButton(
+                    overlay,
+                    text="VIEW HISTORY",
+                    width=180,
+                    height=40,
+                    fg_color="white",
+                    hover_color="#E5E5E5",
+                    corner_radius=20,
+                    border_color="black",
+                    border_width=3,
+                    text_color="black",
+                    font=ctk.CTkFont(family="Verdana", size=18, weight="bold"),
+                    command=lambda: (overlay.destroy(), self.show_history())
+                )
+                hist_btn.place(x=20, y=20)   
+                # panel ng explannation
                 panel = ctk.CTkFrame(overlay, corner_radius=20, fg_color="white")
                 panel.place(relx=0.5, rely=0.5, anchor="center",
                             relwidth=0.95, relheight=0.55)
 
-                # yung columns sa explanation page
-                panel.grid_columnconfigure(0, weight=25)   # image 
-                panel.grid_columnconfigure(1, weight=75)   # text
+                # 25 % image 75 % text
+                panel.grid_columnconfigure(0, weight=25)
+                panel.grid_columnconfigure(1, weight=75)
                 panel.grid_rowconfigure(1, weight=1)
 
                 # titles  don sa explanation pede nyo paltan
@@ -309,13 +321,13 @@ class MainPage(ctk.CTk):
                 ctk.CTkLabel(panel, text="Explanation",
                              font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=1, pady=(12, 0))
 
-                # heatmap pic yung ginawa ng gradcam na pic 
+                # heatmap pic
                 left = ctk.CTkFrame(panel, fg_color="white", corner_radius=15)
                 left.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
                 if heatmap_path and os.path.exists(heatmap_path):
                     try:
                         img = Image.open(heatmap_path)
-                        img.thumbnail((280, 280))          
+                        img.thumbnail((280, 280))
                         tkimg = ImageTk.PhotoImage(img)
                         lbl = ctk.CTkLabel(left, image=tkimg, text="")
                         lbl.image = tkimg
@@ -327,7 +339,7 @@ class MainPage(ctk.CTk):
                     ctk.CTkLabel(left, text="Heatmap not found",
                                  text_color="red").pack(expand=True)
 
-                # explanation yung text nung gradcam
+                # explanation text
                 right = ctk.CTkFrame(panel, fg_color="white", corner_radius=15)
                 right.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
                 txt = ctk.CTkTextbox(right)
@@ -335,26 +347,32 @@ class MainPage(ctk.CTk):
                 txt.insert("0.0", explanation)
                 txt.configure(state="disabled")
 
-                # btn ng explanation page
-                btn_frame = ctk.CTkFrame(panel, fg_color="transparent")
-                btn_frame.place(relx=0.7, rely=0.8, anchor="center")
+                #btn ng back tas close
+                                # --------- VERTICAL BUTTON STACK (Back on top, Close below) ---------
+                btn_bar = ctk.CTkFrame(panel, fg_color="transparent")
+                btn_bar.place(relx=0.77, rely=0.9, anchor="se")
 
-                back_btn = ctk.CTkButton(btn_frame, text="Back",
-                                         width=120,
-                                         fg_color="#3B82F6",
-                                         hover_color="#2563EB",
-                                         font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
-                                         command=overlay.destroy)
-                back_btn.pack(pady=(0, 8))          # Back on top
+                back_btn = ctk.CTkButton(
+                    btn_bar,
+                    text="Back",
+                    width=120,
+                    fg_color="#3B82F6",
+                    hover_color="#2563EB",
+                    font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+                    command=overlay.destroy
+                )
+                back_btn.pack(pady=(0, 8))
 
-                close_btn = ctk.CTkButton(btn_frame, text="Close",
-                                          width=120,
-                                          fg_color="#E53935",
-                                          hover_color="#D32F2F",
-                                          font=ctk.CTkFont(family="Verdana",size=16, weight="bold"),
-                                          command=lambda: (overlay.destroy(),
-                                                           self.show_main()))
-                close_btn.pack()                    # Close below
+                close_btn = ctk.CTkButton(
+                    btn_bar,
+                    text="Close",
+                    width=120,
+                    fg_color="#E53935",
+                    hover_color="#D32F2F",
+                    font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+                    command=lambda: (overlay.destroy(), self.show_main())
+                )
+                close_btn.pack()
 
             self.after(0, show_panel)
 

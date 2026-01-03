@@ -208,5 +208,95 @@
         "Date": "January 02, 2026 12:57 PM",
         "Authenticity": "Fake",
         "Confidence": "99.21%"
+    },
+    {
+        "File Name": "IMG_20250619_224447_822.jpg",
+        "Date": "January 03, 2026 08:09 PM",
+        "Authenticity": "Fake",
+        "Confidence": "99.64%"
+    },
+    {
+        "File Name": "IMG_20250619_224500_731.jpg",
+        "Date": "January 03, 2026 08:09 PM",
+        "Authenticity": "Fake",
+        "Confidence": "99.09%"
+    },
+    {
+        "File Name": "IMG_20250619_224447_822.jpg",
+        "Date": "January 03, 2026 08:23 PM",
+        "Authenticity": "Fake",
+        "Confidence": "99.64%"
+    },
+    {
+        "File Name": "Screenshot 2025-03-31 112208.png",
+        "Date": "January 03, 2026 08:24 PM",
+        "Authenticity": "Real",
+        "Confidence": "99.74%"
+    },
+    {
+        "File Name": "Screenshot 2025-12-15 101409.png",
+        "Date": "January 03, 2026 08:26 PM",
+        "Authenticity": "Fake",
+        "Confidence": "52.53%"
+    },
+    {
+        "File Name": "Screenshot 2025-12-15 101523.png",
+        "Date": "January 03, 2026 08:26 PM",
+        "Authenticity": "Real",
+        "Confidence": "95.67%"
+    },
+    {
+        "File Name": "Screenshot 2025-04-27 035001.png",
+        "Date": "January 03, 2026 08:26 PM",
+        "Authenticity": "Real",
+        "Confidence": "97.92%"
+    },
+    {
+        "File Name": "Screenshot 2025-06-06 140811.png",
+        "Date": "January 03, 2026 08:27 PM",
+        "Authenticity": "Real",
+        "Confidence": "86.76%"
+    },
+    {
+        "File Name": "overlord.jpg",
+        "Date": "January 03, 2026 08:27 PM",
+        "Authenticity": "Real",
+        "Confidence": "92.34%"
+    },
+    {
+        "File Name": "matt-gross-RO3-oMM3s8A-unsplash.jpg",
+        "Date": "January 03, 2026 08:28 PM",
+        "Authenticity": "Fake",
+        "Confidence": "94.72%"
+    },
+    {
+        "File Name": "137.png",
+        "Date": "January 03, 2026 08:28 PM",
+        "Authenticity": "Fake",
+        "Confidence": "99.69%"
+    },
+    {
+        "File Name": "487154356_1334857931090065_4291340847861469251_n.jpg",
+        "Date": "January 03, 2026 08:28 PM",
+        "Authenticity": "Real",
+        "Confidence": "99.10%"
+    },
+    {
+        "File Name": "matt-gross-RO3-oMM3s8A-unsplash.jpg",
+        "Date": "January 03, 2026 08:30 PM",
+        "Authenticity": "Fake",
+        "Confidence": "94.72%"
+    },
+    {
+        "File Name": "462570629_899568045036141_1874648893458896766_n.jpg",
+        "Date": "January 03, 2026 08:30 PM",
+        "Authenticity": "Real",
+        "Confidence": "99.60%"
+    },
+    {
+        "File Name": "COSC80_PreemptivePrio_Cunanan_Rob.jpg",
+        "Date": "January 03, 2026 08:30 PM",
+        "Authenticity": "Real",
+        "Confidence": "93.25%"
     }
 ]

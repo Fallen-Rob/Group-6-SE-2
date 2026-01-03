@@ -1,3 +1,4 @@
+# dito nagrurun 
 import os
 import json
 import datetime
@@ -5,22 +6,22 @@ import threading
 import customtkinter as ctk  # type: ignore
 import numpy as np
 import torch
-import onnxruntime as ort  # type: ignore
 import sys
 import traceback
 from tkinter import filedialog
 from PIL import Image, ImageTk
-from transformers import AutoImageProcessor
 from history import HistoryPage
-from model_run import run_gradcam
-from model_run import run_onnx
+from model_run import OnnxInference 
 
-# theme or body color
+
+# ui
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
 
+# main
 class MainPage(ctk.CTk):
+    
     def __init__(self):
         super().__init__()
 
@@ -28,12 +29,13 @@ class MainPage(ctk.CTk):
         self.geometry("900x600")
         self.resizable(False, False)
 
-        # Background
+        self.inference = OnnxInference("ai_model")
+
+        # bg color
         self.bg_frame = ctk.CTkFrame(self, corner_radius=20)
         self.bg_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=1.0, relheight=1.0)
-        self.bg_frame.configure(fg_color="#8EA8FF")  # light blue background
+        self.bg_frame.configure(fg_color="#8EA8FF")
 
-        # frame for main and history
         self.main_frame = ctk.CTkFrame(self.bg_frame, fg_color="transparent")
         self.history_page = HistoryPage(self.bg_frame, self.show_main)
 
@@ -44,7 +46,6 @@ class MainPage(ctk.CTk):
         header = ctk.CTkFrame(self.main_frame, fg_color="transparent", height=60, corner_radius=20)
         header.pack(fill="x", pady=(10, 20), padx=10)
 
-        # button for page switching to history page
         view_history_btn = ctk.CTkButton(
             header,
             text="VIEW HISTORY",
@@ -61,7 +62,7 @@ class MainPage(ctk.CTk):
         )
         view_history_btn.place(x=10, rely=0.5, anchor="w")
 
-        # button for selecting image
+        # select image button
         select_image_btn = ctk.CTkButton(
             self.main_frame,
             text="SELECT IMAGE",
@@ -80,7 +81,7 @@ class MainPage(ctk.CTk):
 
         self.show_main()
 
-    #  pang navigate
+    # nav
     def show_main(self):
         self.main_frame.tkraise()
 
@@ -88,18 +89,11 @@ class MainPage(ctk.CTk):
         self.history_page.load_history_data()
         self.history_page.tkraise()
 
-    #  para pag nag exe di mag error
-    def get_resource_path(self, relative_path):
-        if hasattr(sys, "_MEIPASS"):
-            return os.path.join(sys._MEIPASS, relative_path)
-        return os.path.join(os.path.abspath("."), relative_path)
-
-    #  pang select ng image
+    # para sa  file type
     def select_image(self):
         file_path = filedialog.askopenfilename(
             title="Select an Image",
-            #para eto lng maaccept na file type
-            filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;")]
+            filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")]
         )
         if not file_path:
             return
@@ -108,7 +102,8 @@ class MainPage(ctk.CTk):
             from tkinter import messagebox
             messagebox.showwarning("File too large", "Please choose an image ≤ 5 MB.")
             return
-        #pang loading
+
+        # yung loading
         overlay = ctk.CTkFrame(self.bg_frame, corner_radius=0)
         overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
         overlay.configure(fg_color="#8EA8FF")
@@ -116,47 +111,20 @@ class MainPage(ctk.CTk):
         box = ctk.CTkFrame(overlay, fg_color="white", corner_radius=20)
         box.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.4, relheight=0.3)
 
-        ctk.CTkLabel(box,
-                     text="🔍 Processing image…",
-                     text_color="black",
+        ctk.CTkLabel(box, text="🔍 Processing image…", text_color="black",
                      font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(30, 10))
 
         progress = ctk.CTkProgressBar(box, mode="indeterminate", width=200)
         progress.pack(pady=(0, 20))
         progress.start()
-
         self.update_idletasks()
 
-        # eto yung nag poprocess habang nasa loading
-        def process_image():
+        # para sa confidence 
+        def work():
             try:
-                file_name = os.path.basename(file_path)
-                current_time = datetime.datetime.now().strftime("%B %d, %Y %I:%M %p")
-
-                so = ort.SessionOptions()
-                so.intra_op_num_threads = 4
-                so.inter_op_num_threads = 1
-                so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-                so.execution_mode = ort.ExecutionMode.ORT_PARALLEL
-
-                model_path = self.get_resource_path("./ai_model/model_ai-generated_opt.onnx")
-                session = ort.InferenceSession(model_path, so, providers=["CPUExecutionProvider"])
-
-                processor_path = self.get_resource_path("./ai_model")
-                processor = AutoImageProcessor.from_pretrained(processor_path)
-
-                img = Image.open(file_path).convert("RGB")
-                inputs = processor(img, return_tensors="np")
-
-                outputs = session.run(None, {"pixel_values": inputs["pixel_values"]})
-                logits = torch.tensor(outputs[0])
-                probs = torch.nn.functional.softmax(logits, dim=-1)
-                labels = ["fake", "real"]
-                label_id = torch.argmax(probs).item()
-
-                confidence = float(probs[0][label_id] * 100)
-                confidence_str = f"{confidence:.2f}%"
-                authenticity = labels[label_id].capitalize()
+                label, confidence = self.inference.predict(file_path)
+                authenticity = label.capitalize()
+                confidence_str = f"{confidence*100:.2f}%"
 
                 # save history
                 history = []
@@ -166,43 +134,37 @@ class MainPage(ctk.CTk):
                             history = json.load(f)
                         except json.JSONDecodeError:
                             history = []
-
                 history.append({
-                    "File Name": file_name,
-                    "Date": current_time,
+                    "File Name": os.path.basename(file_path),
+                    "Date": datetime.datetime.now().strftime("%B %d, %Y %I:%M %p"),
                     "Authenticity": authenticity,
                     "Confidence": confidence_str
                 })
-
                 with open("history.json", "w") as f:
                     json.dump(history, f, indent=4)
 
             except Exception as e:
                 authenticity = "Error"
                 confidence_str = str(e)
-                with open("error_log.txt", "w", encoding="utf-8") as log:
-                    log.write(traceback.format_exc())
+                with open("error_log.txt", "a", encoding="utf-8") as log:
+                    log.write(f"{datetime.datetime.now()}\n{traceback.format_exc()}\n")
 
-            finally:
-                overlay.destroy()
-                self.display_result(file_path, authenticity, confidence_str)
+            overlay.destroy()
+            self.display_result(file_path, authenticity, confidence_str)
 
-        threading.Thread(target=process_image, daemon=True).start()
+        threading.Thread(target=work, daemon=True).start()
 
-    #  result page
-    def display_result(self, file_path, authenticity, confidence_str):
+    #result page
+    def display_result(self, file_path: str, authenticity: str, confidence_str: str):
         result_frame = ctk.CTkFrame(self.bg_frame, corner_radius=20, fg_color="white")
         result_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.95, relheight=0.55)
-
         result_frame.grid_rowconfigure(0, weight=1)
         result_frame.grid_columnconfigure((0, 1), weight=1)
 
-        # col1: preview nung image
+        #col1: img prev
         col1 = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
         col1.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-
         ctk.CTkLabel(col1, text="Image", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10, 5))
-
         preview = Image.open(file_path)
         preview.thumbnail((250, 250))
         preview_tk = ImageTk.PhotoImage(preview)
@@ -210,118 +172,67 @@ class MainPage(ctk.CTk):
         img_label.image = preview_tk
         img_label.pack(pady=10)
 
-        # col2: AI result  yung confidence etc
+        #col2: result 
         col2 = ctk.CTkFrame(result_frame, fg_color="white", corner_radius=15)
         col2.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
-
         ctk.CTkLabel(col2, text="AI Result", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10, 20))
-
-        # result color whether ai or not
         color = "#00C853" if authenticity.lower() == "real" else "#FF5252"
+        ctk.CTkLabel(col2, text=f"Authenticity: {authenticity}\nConfidence: {confidence_str}",
+                     font=ctk.CTkFont(size=16, weight="bold"), text_color=color, justify="center").pack(pady=10)
 
-        ctk.CTkLabel(
-            col2,
-            text=f"Authenticity: {authenticity}\nConfidence: {confidence_str}",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=color,
-            justify="center"
-        ).pack(pady=10)
-
-        # explain button para mapunta sa explanation page
-        explain_btn = ctk.CTkButton(
-            result_frame,
-            text="Explain",
-            fg_color="green",
-            hover_color="green",
-            text_color="white",
-            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
-            width=120,
-            command=lambda: self.open_explain_overlay(file_path)
-        )
+        #buttons
+        explain_btn = ctk.CTkButton(result_frame, text="Explain", fg_color="green", hover_color="green",
+                                    text_color="white", font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+                                    width=120, command=lambda: self.open_explain_overlay(file_path))
         explain_btn.place(relx=0.7, rely=0.8, anchor="w")
-        #close button sa result page
-        close_btn = ctk.CTkButton(
-            result_frame,
-            text="Close",
-            fg_color="#E53935",
-            hover_color="#D32F2F",
-            text_color="white",
-            font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
-            width=120,
-            command=result_frame.destroy
-        )
-        close_btn.place(relx=0.7, rely=0.9, anchor="w")
 
+        close_btn = ctk.CTkButton(result_frame, text="Close", fg_color="#E53935", hover_color="#D32F2F",
+                                  text_color="white", font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+                                  width=120, command=result_frame.destroy)
+        close_btn.place(relx=0.7, rely=0.9, anchor="w")
         result_frame.lift()
 
-       #  Explanation page hahay
-    def open_explain_overlay(self, img_path):
+    #Grad-cam overlay
+    def open_explain_overlay(self, img_path: str):
         overlay = ctk.CTkFrame(self.bg_frame, corner_radius=0)
         overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
         overlay.configure(fg_color="#8EA8FF")
 
-        #Loading screen
         load_box = ctk.CTkFrame(overlay, fg_color="white", corner_radius=20)
-        load_box.place(relx=0.5, rely=0.5, anchor="center",
-                       relwidth=0.42, relheight=0.28)
-
-        ctk.CTkLabel(load_box, text="🔍 Generating explanation…",
-                     text_color="black",
+        load_box.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.42, relheight=0.28)
+        ctk.CTkLabel(load_box, text="🔍 Generating explanation…", text_color="black",
                      font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(24, 8))
-
         load_pb = ctk.CTkProgressBar(load_box, mode="indeterminate", width=220)
         load_pb.pack(pady=(6, 12))
         load_pb.start()
         self.update_idletasks()
-        #button para sa history
-        
-        # nag rurun gradcam
+
         def worker():
             try:
-                res = run_gradcam(img_path)
-                if isinstance(res, tuple) and len(res) >= 2:
-                    heatmap_path, explanation = res[0], res[1]
-                else:
-                    heatmap_path = os.path.join(os.getcwd(), "gradcam_overlay.png")
-                    explanation = "Grad-CAM finished (no string returned)."
+                _, _, heatmap_path, explanation = self.inference.predict_with_gradcam(img_path)
             except Exception as e:
                 heatmap_path, explanation = None, f"Error generating explanation:\n{e}"
 
             def show_panel():
                 load_pb.stop()
                 load_box.destroy()
-                hist_btn = ctk.CTkButton(
-                    overlay,
-                    text="VIEW HISTORY",
-                    width=180,
-                    height=40,
-                    fg_color="white",
-                    hover_color="#E5E5E5",
-                    corner_radius=20,
-                    border_color="black",
-                    border_width=3,
-                    text_color="black",
-                    font=ctk.CTkFont(family="Verdana", size=18, weight="bold"),
-                    command=lambda: (overlay.destroy(), self.show_history())
-                )
-                hist_btn.place(x=20, y=20)   
-                # panel ng explannation
-                panel = ctk.CTkFrame(overlay, corner_radius=20, fg_color="white")
-                panel.place(relx=0.5, rely=0.5, anchor="center",
-                            relwidth=0.95, relheight=0.55)
+                #history button
+                hist_btn = ctk.CTkButton(overlay, text="VIEW HISTORY", width=180, height=40,
+                                         fg_color="white", hover_color="#E5E5E5", corner_radius=20,
+                                         border_color="black", border_width=3, text_color="black",
+                                         font=ctk.CTkFont(family="Verdana", size=18, weight="bold"),
+                                         command=lambda: (overlay.destroy(), self.show_history()))
+                hist_btn.place(x=20, y=20)
 
-                # 25 % image 75 % text
+                #explanation panel
+                panel = ctk.CTkFrame(overlay, corner_radius=20, fg_color="white")
+                panel.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.95, relheight=0.55)
                 panel.grid_columnconfigure(0, weight=25)
                 panel.grid_columnconfigure(1, weight=75)
                 panel.grid_rowconfigure(1, weight=1)
+                ctk.CTkLabel(panel, text="Image Heatmap", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=0, pady=(12, 0))
+                ctk.CTkLabel(panel, text="Explanation", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=1, pady=(12, 0))
 
-                # titles  don sa explanation pede nyo paltan
-                ctk.CTkLabel(panel, text="Image Heatmap",
-                             font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=0, pady=(12, 0))
-                ctk.CTkLabel(panel, text="Explanation",
-                             font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=1, pady=(12, 0))
-
-                # heatmap pic
                 left = ctk.CTkFrame(panel, fg_color="white", corner_radius=15)
                 left.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
                 if heatmap_path and os.path.exists(heatmap_path):
@@ -333,13 +244,10 @@ class MainPage(ctk.CTk):
                         lbl.image = tkimg
                         lbl.pack(expand=True)
                     except Exception as e:
-                        ctk.CTkLabel(left, text=f"Error loading heatmap:\n{e}",
-                                     text_color="red").pack(expand=True)
+                        ctk.CTkLabel(left, text=f"Error loading heatmap:\n{e}", text_color="red").pack(expand=True)
                 else:
-                    ctk.CTkLabel(left, text="Heatmap not found",
-                                 text_color="red").pack(expand=True)
+                    ctk.CTkLabel(left, text="Heatmap not found", text_color="red").pack(expand=True)
 
-                # explanation text
                 right = ctk.CTkFrame(panel, fg_color="white", corner_radius=15)
                 right.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
                 txt = ctk.CTkTextbox(right)
@@ -347,31 +255,15 @@ class MainPage(ctk.CTk):
                 txt.insert("0.0", explanation)
                 txt.configure(state="disabled")
 
-                #btn ng back tas close
-                                # --------- VERTICAL BUTTON STACK (Back on top, Close below) ---------
                 btn_bar = ctk.CTkFrame(panel, fg_color="transparent")
                 btn_bar.place(relx=0.77, rely=0.9, anchor="se")
-
-                back_btn = ctk.CTkButton(
-                    btn_bar,
-                    text="Back",
-                    width=120,
-                    fg_color="#3B82F6",
-                    hover_color="#2563EB",
-                    font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
-                    command=overlay.destroy
-                )
+                back_btn = ctk.CTkButton(btn_bar, text="Back", width=120, fg_color="#3B82F6", hover_color="#2563EB",
+                                         font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+                                         command=overlay.destroy)
                 back_btn.pack(pady=(0, 8))
-
-                close_btn = ctk.CTkButton(
-                    btn_bar,
-                    text="Close",
-                    width=120,
-                    fg_color="#E53935",
-                    hover_color="#D32F2F",
-                    font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
-                    command=lambda: (overlay.destroy(), self.show_main())
-                )
+                close_btn = ctk.CTkButton(btn_bar, text="Close", width=120, fg_color="#E53935", hover_color="#D32F2F",
+                                          font=ctk.CTkFont(family="Verdana", size=16, weight="bold"),
+                                          command=lambda: (overlay.destroy(), self.show_main()))
                 close_btn.pack()
 
             self.after(0, show_panel)
@@ -379,8 +271,7 @@ class MainPage(ctk.CTk):
         threading.Thread(target=worker, daemon=True).start()
 
 
-#pang run
+# para mag run
 if __name__ == "__main__":
     app = MainPage()
     app.mainloop()
-    

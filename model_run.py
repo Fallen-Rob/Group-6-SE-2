@@ -1,75 +1,63 @@
-# updated_run_onnx_with_gradcam.py
-# ONNX inference + automatic Grad-CAM explanation (attention-rollout)
-# Uses GPU if available for ONNX and PyTorch. Fully offline.
-
-import onnxruntime as ort # type: ignore
-from transformers import AutoImageProcessor
-from PIL import Image
-import numpy as np
-import torch
-import sys
-from gradcam_engine import explain_image
+#basically utak nung ai 
 import os
 import sys
-#  reuse the same helper you already have in main.py
-def _resource_path(rel):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, rel)
-    return os.path.join(os.path.abspath('.'), rel)
-
-ONNX_MODEL_PATH = _resource_path("ai_model/model_ai-generated_opt.onnx")
-MODEL_DIR       = _resource_path("ai_model")
-HEATMAP_OUTPUT  = _resource_path("gradcam_overlay.png")
-
-def choose_providers():
-    providers = ort.get_available_providers()
-    if "CUDAExecutionProvider" in providers:
-        return ["CUDAExecutionProvider", "CPUExecutionProvider"]
-    return ["CPUExecutionProvider"]
+import numpy as np
+import torch
+import onnxruntime as ort # type: ignore
+from transformers import AutoImageProcessor 
+from PIL import Image
+from gradcam_engine import GradCamExplainer 
 
 
-def load_session(path):
-    so = ort.SessionOptions()
-    so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-    providers = choose_providers()
-    session = ort.InferenceSession(path, so, providers=providers)
-    print("\nONNX providers used:", session.get_providers())
-    return session
+class OnnxInference:
+  #load nung onnx
+    def __init__(self, model_dir: str = "ai_model") -> None:
+        self.model_dir = self._resource_path(model_dir)
+        onnx_path = os.path.join(self.model_dir, "model_ai-generated_opt.onnx")
+        if not os.path.exists(onnx_path):
+            raise FileNotFoundError(onnx_path)
 
+        # ONNX session
+        so = ort.SessionOptions()
+        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"] if "CUDAExecutionProvider" in ort.get_available_providers() else ["CPUExecutionProvider"]
+        self.session = ort.InferenceSession(onnx_path, so, providers=providers)
 
-def run_onnx(image_path):
-    processor = AutoImageProcessor.from_pretrained(MODEL_DIR)
+        # Processor
+        self.processor = AutoImageProcessor.from_pretrained(self.model_dir)
 
-    img = Image.open(image_path).convert("RGB")
-    inputs = processor(img, return_tensors="np")
+        # Labels
+        self.labels = ["fake", "real"]
 
-    session = load_session(ONNX_MODEL_PATH)
-    inp_name = session.get_inputs()[0].name
+        # Grad-CAM engine (lazy-loaded on first use)
+        self._gradcam: GradCamExplainer | None = None
 
-    pixel_values = inputs["pixel_values"].astype(np.float32)
+    # ------------------------------------------------------------------
+    def predict(self, image_path: str) -> tuple[str, float]:
+        """
+        Returns:  (label: str, confidence: float 0-1)
+        """
+        img = Image.open(image_path).convert("RGB")
+        inputs = self.processor(img, return_tensors="np")
+        pixel_values = inputs["pixel_values"].astype(np.float32)
 
-    outputs = session.run(None, {inp_name: pixel_values})
-    logits = torch.tensor(outputs[0])
-    probs = torch.nn.functional.softmax(logits, dim=-1)
+        outputs = self.session.run(None, {self.session.get_inputs()[0].name: pixel_values})
+        logits = torch.tensor(outputs[0])
+        probs = torch.nn.functional.softmax(logits, dim=-1)
+        label_id = int(torch.argmax(probs).item())
+        confidence = float(probs[0, label_id])
+        return self.labels[label_id], confidence
 
-    label_id = int(torch.argmax(probs, dim=-1).cpu().item())
-    confidence = float(probs[0, label_id])
+    def predict_with_gradcam(self, image_path: str) -> tuple[str, float, str, str]:
+        label, conf = self.predict(image_path)  # reuse preprocessing
+        if self._gradcam is None:
+            self._gradcam = GradCamExplainer(self.model_dir)
+        heatmap_path, explanation = self._gradcam.explain(image_path)
+        return label, conf, heatmap_path, explanation
 
-    return LABELS[label_id], confidence
-
-
-def run_gradcam(image_path):
-    print("\nRunning Grad-CAM explanation (PyTorch)... This may take a few seconds...\n")
-
-    heatmap, metrics, explanation, overlay = explain_image(
-        image_path=image_path,
-        model_dir=MODEL_DIR,
-        save_overlay=HEATMAP_OUTPUT
-    )
-
-    print("=== Grad-CAM Explanation ===")
-    print(explanation)
-
-    print(f"\nHeatmap saved to: {HEATMAP_OUTPUT}")
-
-    return HEATMAP_OUTPUT, explanation
+    @staticmethod
+    def _resource_path(rel: str) -> str:
+        """PyInstaller one-file bundle helper."""
+        if hasattr(sys, "_MEIPASS"):
+            return os.path.join(sys._MEIPASS, rel)
+        return os.path.join(os.path.abspath("."), rel)

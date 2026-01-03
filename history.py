@@ -15,7 +15,7 @@ class HistoryPage(ctk.CTkFrame):
                             relwidth=0.9, relheight=0.9)
         self.bg_frame.configure(fg_color=("lightblue", "#7FA6F3"))
 
-        # --- HEADER ---
+        #header agin
         header = ctk.CTkFrame(self.bg_frame, fg_color="white",
                               height=60, corner_radius=20)
         header.pack(fill="x", pady=(10, 5), padx=10)
@@ -41,7 +41,7 @@ class HistoryPage(ctk.CTkFrame):
         )
         back_btn.place(x=10, rely=0.5, anchor="w")
 
-        # ---------- CLEAR-HISTORY BUTTON (created here, placed after data check) ----------
+        #clear history button na nag aappear lng pah may history na
         self.clear_btn = ctk.CTkButton(
             header,
             text="🗑 Clear History",
@@ -53,9 +53,8 @@ class HistoryPage(ctk.CTkFrame):
             font=ctk.CTkFont(size=12, weight="bold"),
             command=self.ask_clear_history
         )
-        # will be shown/hidden after data load
 
-        # --- TABLE AREA ---
+        #table of contents like kelan ,pangalan ng file etc
         table_frame = ctk.CTkFrame(self.bg_frame, fg_color="white", corner_radius=15)
         table_frame.pack(fill="both", expand=True, padx=20, pady=(5, 20))
 
@@ -75,7 +74,7 @@ class HistoryPage(ctk.CTkFrame):
         self.tree.column("Authenticity", width=125, anchor="center")
         self.tree.column("Confidence", width=125, anchor="center")
 
-        # --- STYLE ---
+        #ui
         style = ttk.Style()
         style.theme_use("default")
 
@@ -95,7 +94,7 @@ class HistoryPage(ctk.CTkFrame):
             relief="solid"
         )
 
-        # Selected row highlight
+        # pang highlight ng row
         style.map("Treeview", background=[("selected", "#FF0000")])
 
         style.layout("Treeview", [
@@ -104,9 +103,7 @@ class HistoryPage(ctk.CTkFrame):
 
         self.tree.pack(fill="both", expand=True, padx=10, pady=10)
 
-    # ------------------------------------------------------------------
-    #  LOAD DATA  +  SHOW/HIDE CLEAR BUTTON
-    # ------------------------------------------------------------------
+    
     def load_history_data(self):
         # Clear current rows
         for row in self.tree.get_children():
@@ -132,15 +129,13 @@ class HistoryPage(ctk.CTkFrame):
         except Exception as e:
             print("Error loading history:", e)
 
-        # show/hide Clear button
-        if self.tree.get_children():        # at least 1 row
+        # show o hide nung Clear button
+        if self.tree.get_children():        
             self.clear_btn.place(relx=1, x=-10, rely=0.5, anchor="e")
         else:
             self.clear_btn.place_forget()
 
-    # ------------------------------------------------------------------
-    #  CLEAR WITH CONFIRMATION
-    # ------------------------------------------------------------------
+    #  pang confirm
     def ask_clear_history(self):
         dlg = ctk.CTkToplevel(self)
         dlg.title("Confirm")
@@ -157,7 +152,7 @@ class HistoryPage(ctk.CTkFrame):
                 open("history.json", "w").write("[]")
             except Exception as e:
                 print("Clear failed:", e)
-            self.load_history_data()   # refresh + hide button
+            self.load_history_data()  
             dlg.destroy()
 
         btn_frame = ctk.CTkFrame(dlg, fg_color="transparent")
